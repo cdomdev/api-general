@@ -1,28 +1,35 @@
 import express from "express";
+import { promises as fs } from "fs";
+import path from "path";
+
 const router = express.Router();
-import fs from 'fs'
+const __dirname = path.resolve();
+const routePath = path.join(__dirname, "app", "routes");
 
-const path = `${__dirname}`
+const removeExtension = (fileName) => fileName.split(".").shift();
 
-const removeExtension = (fileName) => {
-    return fileName.split('.').shift()
-}
-
-export const routes = fs.readFileSync(path).filter((file) => {
-    const fileName = removeExtension(file)
-    const skip = ['index'].includes(fileName)
-    if (!skip) {
-        router.use(`${fileName}`, require(`./${fileName}`))
-        console.log('---> ', fileName)
+const loadRoutes = async () => {
+  try {
+    const files = await fs.readdir(routePath);
+    for (const file of files) {
+      if (file !== "index.js") {
+        const fileName = removeExtension(file);
+        const modulePath = path.join(routePath, `${fileName}.js`);
+        const module = await import(`file://${modulePath}`);
+        router.use(`/${fileName}`, module.default);
+      }
     }
+  } catch (err) {
+    console.error("Error loading routes:", err);
+  }
+};
 
-})
+await loadRoutes();
 
-router.get('*', (req, res) =>{
-    res.status(404).json({
-        message: 'Route not found'
-    })
-})
+router.get("*", (req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
+});
 
-// module.exports = router
-
+export default router;

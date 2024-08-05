@@ -1,17 +1,15 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const dbConnect = () =>{
-    const DB_URI = process.env.DB_URI;
-    mongoose.connect(DB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    } , (err, res) =>{
-        if(!err){
-            console.log('----CONEXION FADILLA ----')
-        }else{
-            console.log('----CONEXION CORRECTO ----')
-        }
-    })
-    
-}
+const dbConnect = async () => {
+  try {
+    await mongoose.connect(process.env.DB_URI);
+    console.log("---CONEXION EXITOSA----");
+  } catch (error) {
+    console.log("---CONEXION FALLIDA----", error);
+    throw error;
+  }
+};
 
+export { dbConnect };
